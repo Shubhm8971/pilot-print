@@ -2,8 +2,9 @@ services:
   - type: web
     name: print-pilot-shop
     runtime: static
-    buildCommand: cd print-pilot && npm ci && npm run build
-    staticPublishPath: print-pilot/dist
+    rootDir: print-pilot
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
     routes:
       - type: rewrite
         source: /*

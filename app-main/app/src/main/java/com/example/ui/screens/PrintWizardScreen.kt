@@ -89,7 +89,7 @@ fun PrintWizardScreen(
     }
 
     fun launchFilePicker() {
-        filePicker.launch("application/pdf")
+        filePicker.launch("*/*")
     }
 
     val totalPages = uiState.uploadedDocuments.sumOf { it.pageCount }

@@ -35,13 +35,14 @@ jobs:
           gradle-version: '9.1.0'
 
       - name: Build debug APK
+        working-directory: app-main
         run: gradle :app:assembleDebug --no-daemon
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:
           name: print-pilot-debug-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
+          path: app-main/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
 
   worker:
@@ -49,7 +50,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: service
+        working-directory: app-main/service
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -59,7 +60,7 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: service/package-lock.json
+          cache-dependency-path: app-main/service/package-lock.json
 
       - name: Install Worker dependencies
         run: npm ci

@@ -1,0 +1,44 @@
+{
+	"$schema": "./node_modules/wrangler/config-schema.json",
+	"name": "print-pilot-ops",
+	"main": "src/index.ts",
+	"compatibility_date": "2026-08-22",
+	"observability": {
+		"enabled": true,
+		"head_sampling_rate": 1
+	},
+	"triggers": {
+		"crons": [
+			"*/5 * * * *"
+		]
+	},
+	"kv_namespaces": [
+		{
+			"binding": "RUNS",
+			"id": "cd2cd4db3d3440e097df0ec37b7d310b"
+		}
+	],
+	"durable_objects": {
+		"bindings": [
+			{
+				"name": "REQUEST_LOCKS",
+				"class_name": "RequestLock"
+			}
+		]
+	},
+	"migrations": [
+		{
+			"tag": "v1",
+			"new_sqlite_classes": ["RequestLock"]
+		}
+	],
+	"secrets": {
+		"required": [
+			"NOTION_TOKEN",
+			"WEBHOOK_SECRET",
+			"NOTION_REQUESTS_DATA_SOURCE_ID",
+			"NOTION_RUN_LOG_DATA_SOURCE_ID",
+			"SHOP_WEBHOOK_URL"
+		]
+	}
+}

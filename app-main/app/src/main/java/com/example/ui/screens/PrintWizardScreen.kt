@@ -1,5 +1,11 @@
 package com.example.ui.screens
 
+import android.content.Context
+import android.graphics.pdf.PdfRenderer
+import android.net.Uri
+import android.os.ParcelFileDescriptor
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -45,6 +51,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -70,6 +77,16 @@ fun PrintWizardScreen(
     modifier: Modifier = Modifier
 ) {
     var showAddCustomDocDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val filePicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        uri?.let {
+            val fileName = context.fileName(it)
+            val pageCount = context.pdfPageCount(it)
+            onAddDocument(fileName, pageCount)
+        }
+    }
 
     val totalPages = uiState.uploadedDocuments.sumOf { it.pageCount }
 
@@ -249,10 +266,7 @@ fun PrintWizardScreen(
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(16.dp))
                     .clickable {
-                        // Quick file addition
-                        val docNames = listOf("Thesis_Draft.pdf", "Lab_Manual.pdf", "Lecture_Notes.pdf", "Project_Report.docx")
-                        val nextName = docNames.random()
-                        onAddDocument(nextName, (8..36).random())
+                        filePicker.launch(arrayOf("application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"))
                     }
                     .testTag("upload_dropzone")
             ) {
@@ -291,10 +305,7 @@ fun PrintWizardScreen(
                     Spacer(modifier = Modifier.height(14.dp))
 
                     OutlinedButton(
-                        onClick = {
-                            val nextName = "Custom_Assignment_${(1..99).random()}.pdf"
-                            onAddDocument(nextName, 18)
-                        },
+                        onClick = { filePicker.launch(arrayOf("application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document")) },
                         shape = RoundedCornerShape(8.dp),
                         border = BorderStroke(1.dp, PrintPilotBorderLight),
                         colors = ButtonDefaults.outlinedButtonColors(
@@ -448,6 +459,22 @@ fun PrintWizardScreen(
             }
         }
     }
+}
+
+private fun Context.fileName(uri: Uri): String {
+    val fallback = "Selected document.pdf"
+    return contentResolver.query(uri, arrayOf("_display_name"), null, null, null)?.use { cursor ->
+        if (cursor.moveToFirst()) cursor.getString(0) else fallback
+    } ?: fallback
+}
+
+private fun Context.pdfPageCount(uri: Uri): Int {
+    if (fileName(uri).endsWith(".pdf", ignoreCase = true).not()) return 1
+    return runCatching {
+        contentResolver.openFileDescriptor(uri, "r")?.use { descriptor: ParcelFileDescriptor ->
+            PdfRenderer(descriptor).use { renderer -> renderer.pageCount.coerceAtLeast(1) }
+        } ?: 1
+    }.getOrDefault(1)
 }
 
 @Composable

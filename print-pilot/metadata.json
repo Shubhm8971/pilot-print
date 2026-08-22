@@ -1,0 +1,6 @@
+{
+  "name": "Print Pilot",
+  "description": "Shop Control Center and live queue management portal for print shop operators.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

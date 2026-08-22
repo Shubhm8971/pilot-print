@@ -42,6 +42,11 @@ export default {
       return json({ ok: true, service: "print-pilot-ops" });
     }
 
+    if (request.method === "GET" && url.pathname === "/shop/orders") {
+      const orders = await queryRequests(env, ["Approved", "Sent"]);
+      return json(orders.map(shopOrder));
+    }
+
     if (request.method === "POST" && url.pathname === "/webhooks/requests") {
       if (!authorized(request, env.WEBHOOK_SECRET)) return json({ error: "Unauthorized" }, 401);
       const payload = await readJson(request);
@@ -252,6 +257,19 @@ function propertyNumber(property: NotionProperty | undefined): number | null {
   return property?.number ?? null;
 }
 
+function shopOrder(page: NotionPage): Record<string, unknown> {
+  return {
+    id: page.id,
+    customerName: propertyText(page.properties.Name) || "Print Pilot customer",
+    fileName: propertyText(page.properties.Name) || "Print request",
+    pageCount: propertyNumber(page.properties.Pages) ?? 1,
+    isPriority: propertyText(page.properties.Priority).toLowerCase() === "high",
+    status: propertyText(page.properties.Status).toLowerCase() === "sent" ? "printing" : "queued",
+    createdAt: new Date().toISOString(),
+    estimatedWait: "Awaiting shop action"
+  };
+}
+
 function title(value: string): { title: Array<{ text: { content: string } }> } {
   return { title: [{ text: { content: value.slice(0, 2000) } }] };
 }
@@ -304,7 +322,13 @@ export class RequestLock extends DurableObject<Env> {
 }
 
 function json(body: unknown, status = 200): Response {
-  return new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      "content-type": "application/json",
+      "access-control-allow-origin": "*"
+    }
+  });
 }
 
 function errorMessage(error: unknown): string {

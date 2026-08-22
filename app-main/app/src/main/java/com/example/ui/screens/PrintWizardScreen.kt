@@ -1,6 +1,7 @@
 package com.example.ui.screens
 
 import android.content.Context
+import android.content.Intent
 import android.graphics.pdf.PdfRenderer
 import android.net.Uri
 import android.os.ParcelFileDescriptor
@@ -79,9 +80,9 @@ fun PrintWizardScreen(
     var showAddCustomDocDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val filePicker = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri ->
-        uri?.let {
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        result.data?.takeIf { result.resultCode == android.app.Activity.RESULT_OK }?.data?.let {
             val fileName = context.fileName(it)
             val pageCount = context.pdfPageCount(it)
             onAddDocument(fileName, pageCount)
@@ -89,7 +90,14 @@ fun PrintWizardScreen(
     }
 
     fun launchFilePicker() {
-        filePicker.launch("*/*")
+        filePicker.launch(
+            Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                addCategory(Intent.CATEGORY_OPENABLE)
+                type = "application/pdf"
+                putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"))
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
+            }
+        )
     }
 
     val totalPages = uiState.uploadedDocuments.sumOf { it.pageCount }

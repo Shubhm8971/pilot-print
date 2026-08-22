@@ -79,13 +79,17 @@ fun PrintWizardScreen(
     var showAddCustomDocDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val filePicker = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.OpenDocument()
+        contract = ActivityResultContracts.GetContent()
     ) { uri ->
         uri?.let {
             val fileName = context.fileName(it)
             val pageCount = context.pdfPageCount(it)
             onAddDocument(fileName, pageCount)
         }
+    }
+
+    fun launchFilePicker() {
+        filePicker.launch("application/pdf")
     }
 
     val totalPages = uiState.uploadedDocuments.sumOf { it.pageCount }
@@ -266,7 +270,7 @@ fun PrintWizardScreen(
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(16.dp))
                     .clickable {
-                        filePicker.launch(arrayOf("application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"))
+                        launchFilePicker()
                     }
                     .testTag("upload_dropzone")
             ) {
@@ -305,7 +309,7 @@ fun PrintWizardScreen(
                     Spacer(modifier = Modifier.height(14.dp))
 
                     OutlinedButton(
-                        onClick = { filePicker.launch(arrayOf("application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document")) },
+                        onClick = { launchFilePicker() },
                         shape = RoundedCornerShape(8.dp),
                         border = BorderStroke(1.dp, PrintPilotBorderLight),
                         colors = ButtonDefaults.outlinedButtonColors(

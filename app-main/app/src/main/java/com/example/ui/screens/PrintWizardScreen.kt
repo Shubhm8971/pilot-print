@@ -91,12 +91,12 @@ fun PrintWizardScreen(
 
     fun launchFilePicker() {
         filePicker.launch(
-            Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+            Intent.createChooser(Intent(Intent.ACTION_GET_CONTENT).apply {
                 addCategory(Intent.CATEGORY_OPENABLE)
-                type = "application/pdf"
+                type = "*/*"
                 putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"))
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
-            }
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }, "Choose a document")
         )
     }
 
